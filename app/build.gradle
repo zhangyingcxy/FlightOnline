@@ -26,9 +26,13 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'org.jsoup:jsoup:1.13.1'
+    implementation 'com.zaaach:citypicker:2.0.3'	//必选
+    //noinspection GradleCompatible
+    implementation 'com.android.support:recyclerview-v7:27.1.1'	//必选
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation 'org.jsoup:jsoup:1.13.1'
 
+ 
 }

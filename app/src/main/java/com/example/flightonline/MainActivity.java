@@ -3,6 +3,8 @@ package com.example.flightonline;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,8 +13,16 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.Nullable;
+import com.zaaach.citypicker.CityPicker;
+import com.zaaach.citypicker.adapter.OnPickListener;
+import com.zaaach.citypicker.model.City;
+import com.zaaach.citypicker.model.HotCity;
+import com.zaaach.citypicker.model.LocatedCity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BaseActivity {//继承自BaseActivity，方便进行管理
     private LinearLayout pageLayout;
@@ -34,12 +44,16 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
     public static boolean isPageLeft=true;//用于标志当前显示的页面（主界面/用户界面）
     public static boolean isLoggedIn=false;//标志是否已登录
 
+    List<HotCity>   hotCities;//检索城市时使用的热门城市
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initUI();
         setUpListener();
+        initHotCities();
+
     }
 
     @Override
@@ -120,6 +134,57 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                 startActivity(intent);
             }
         });
+    }
+
+    private void initHotCities(){
+        hotCities=new ArrayList<>();
+        hotCities.add(new HotCity("北京", "北京", "101010100")); //code为城市代码
+        hotCities.add(new HotCity("上海", "上海", "101020100"));
+        hotCities.add(new HotCity("广州", "广东", "101280101"));
+        hotCities.add(new HotCity("深圳", "广东", "101280601"));
+        hotCities.add(new HotCity("杭州", "浙江", "101210101"));
+        hotCities.add(new HotCity("成都", "四川", "101270101"));
+    }
+
+    private void selectPos(final boolean isStartCity){
+        //initHotCities();
+
+        //以下部分引用代码：https://github.com/zaaach/CityPicker
+        CityPicker.from(MainActivity.this) //activity或者fragment
+                .enableAnimation(true)	//启用动画效果，默认无
+                //.setAnimationStyle(anim)	//自定义动画
+                .setLocatedCity(new LocatedCity("成都", "四川", "101270101")/*null*/)  //APP自身已定位的城市，传null会自动定位（默认）
+                .setHotCities(hotCities)	//指定热门城市
+                .setOnPickListener(new OnPickListener() {
+                    @Override
+                    public void onPick(int position, City data) {
+                        Toast.makeText(getApplicationContext(), data.getName(), Toast.LENGTH_SHORT).show();
+                        if(isStartCity)
+                            startCity.setText(data.getName());
+                        else
+                            endCity.setText(data.getName());
+                    }
+
+                    @Override
+                    public void onCancel(){
+                        Toast.makeText(getApplicationContext(), "取消选择", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onLocate() {
+                        //定位接口，需要APP自身实现，这里模拟一下定位
+                        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                //定位完成之后更新数据
+                                //CityPicker.getInstance()
+                                //.locateComplete(new LocatedCity("深圳", "广东", "101280601"), LocateState.SUCCESS);
+                                toastForShort("xxxxxx");///////////////
+                            }
+                        }, 3000);
+                    }
+                })
+                .show();
     }
 
     /*
@@ -204,16 +269,20 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         @Override
         public void onClick(View v) {
             if(v.getId() == startCity.getId()){
+                /*
                 Intent intent=new Intent(MainActivity.this,SelectPosActivity.class);
                 //SelectPosActivity销毁时会返回数据给当前活动，在onActivityResult中处理
-                startActivityForResult(intent,1);
+                startActivityForResult(intent,1);*//////////////////////////////////////////
+                selectPos(true);
             }else if(v.getId()==endCity.getId()){
-                Intent intent=new Intent(MainActivity.this,SelectPosActivity.class);
-                startActivityForResult(intent,2);
+                /*Intent intent=new Intent(MainActivity.this,SelectPosActivity.class);
+                startActivityForResult(intent,2);*//////////////////////////////////////////
+                selectPos(false);
             }
         }
     }
 
+    /*
     //根据SelectPosActivity活动的返回值设置相应的城市名
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -230,5 +299,5 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                     //endCity.setText(data.getStringExtra(SelectPosActivity.KEY_PICKED_CITY));
                 }
         }
-    }
+    }*////////////////////////////////////////////////////
 }
