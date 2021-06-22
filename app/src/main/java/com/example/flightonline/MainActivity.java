@@ -1,6 +1,7 @@
 package com.example.flightonline;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,23 +9,35 @@ import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+
+import com.example.flightonline.adapter.ExitListAdapter;
+import com.example.flightonline.adapter.OrderAdapter;
 import com.zaaach.citypicker.CityPicker;
 import com.zaaach.citypicker.adapter.OnPickListener;
 import com.zaaach.citypicker.model.City;
 import com.zaaach.citypicker.model.HotCity;
 import com.zaaach.citypicker.model.LocatedCity;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends BaseActivity {//继承自BaseActivity，方便进行管理
+    static final int REQUEST_CODE_INQUIRY=0;
+
     private LinearLayout pageLayout;
     private ImageView page1;
     private ImageView page2;
@@ -38,8 +51,14 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
     private ImageView portrait1;
     private LinearLayout notLoggedIn;
     private LinearLayout loggedIn;
-    private ListView userList;
+    private ListView exitList;//退出登录和退出程序
+    private LinearLayout orderLayout;
+    private ListView orderBar;//订单
+    private ListView orderList;//详细订单列表
     private View include2;
+
+    private ExitListAdapter exitListAdapter;
+    private OrderAdapter orderAdapter;
 
     public static boolean isPageLeft=true;//用于标志当前显示的页面（主界面/用户界面）
     public static boolean isLoggedIn=false;//标志是否已登录
@@ -50,9 +69,10 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initHotCities();
         initUI();
         setUpListener();
-        initHotCities();
+
 
     }
 
@@ -63,11 +83,66 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
             if(isLoggedIn){
                 loggedIn.setVisibility(View.VISIBLE);
                 notLoggedIn.setVisibility(View.GONE);
+                orderLayout.setVisibility(View.VISIBLE);
+                exitListAdapter.setLength(2);
             }else{
                 loggedIn.setVisibility(View.GONE);
                 notLoggedIn.setVisibility(View.VISIBLE);
+                orderList.setVisibility(View.GONE);
+                orderLayout.setVisibility(View.GONE);
+                exitListAdapter.setLength(1);
             }
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case REQUEST_CODE_INQUIRY:
+                if(resultCode==RESULT_OK){
+                    int year,month,day;
+                    year=data.getIntExtra("year",0);
+                    month=data.getIntExtra("month",0);
+                    day=data.getIntExtra("day",0);
+                    if(year!=0&&day!=0)
+                        date.setText(getDateChineseString(year,month+1,day));
+                }
+                break;
+            default:
+        }
+    }
+
+    //获取年月日的字符串形式：2021年06月17日
+    private String getDateChineseString(int year,int month,int day){
+        String str="";
+        str+=year+"年";
+        str+=month>=10?month+"月":"0"+month+"月";
+        str+=day>=10?day+"日":"0"+day+"日";
+        return str;
+    }
+
+    //将年月日转换为long类型的日期
+    private long getDateLong(int month,int day,int year){
+        String str="";
+        str+=year;
+        str+="-";
+        str+=(month>=9)?(month+1):"0"+(month+1);
+        str+="-";
+        str+=(day>=10)?day:"0"+day;
+        str+=" 12:00:00";
+
+        //以下参考：https://blog.csdn.net/chentaishan/article/details/106389256
+        @SuppressLint("SimpleDateFormat")
+        SimpleDateFormat sdf= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date _date=null;
+        try {
+            _date = (Date)sdf.parse(str);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        assert _date != null;
+        return _date.getTime();
     }
 
     private void initUI(){
@@ -87,7 +162,18 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         portrait1=(ImageView)include2.findViewById(R.id.portrait1);
         notLoggedIn=(LinearLayout)include2.findViewById(R.id.notLoggedIn);
         loggedIn=(LinearLayout)include2.findViewById(R.id.LoggedIn);
-        userList=(ListView) include2.findViewById(R.id.userList);
+        exitList=(ListView) include2.findViewById(R.id.exitList);
+        orderLayout=(LinearLayout) include2.findViewById(R.id.orderLayout);
+        orderBar=(ListView) include2.findViewById(R.id.orderBar);
+        orderList=(ListView) include2.findViewById(R.id.orderList);
+
+        String[] exitOps={"退出程序","退出登录"};
+        exitListAdapter=new ExitListAdapter(MainActivity.this,exitOps,1);
+        exitList.setAdapter(exitListAdapter);
+        String[] arr={"我的订单"};
+        orderAdapter=new OrderAdapter(MainActivity.this,arr,1);
+        orderBar.setAdapter(orderAdapter);
+
 
         //打开程序时显示主界面
         page1.setImageLevel(0);
@@ -95,6 +181,11 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         include1.setVisibility(View.VISIBLE);
         include2.setVisibility(View.GONE);
 
+        Calendar calendar=Calendar.getInstance();
+        final int year=calendar.get(Calendar.YEAR);       //当前年
+        final int month=calendar.get(Calendar.MONTH);     //当前月
+        final int day=calendar.get(Calendar.DAY_OF_MONTH);//当前日
+        date.setText(getDateChineseString(year,month+1,day));
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -123,7 +214,55 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                 intent.putExtra("start_city",startCity.getText().toString());
                 intent.putExtra("end_city",endCity.getText().toString());
                 intent.putExtra("date",date.getText().toString());
-                startActivity(intent);
+                startActivityForResult(intent,REQUEST_CODE_INQUIRY);
+            }
+        });
+
+        date.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder dialog= new AlertDialog.Builder(MainActivity.this);
+                View view=(LinearLayout) getLayoutInflater().inflate(R.layout.date_dialog,null);
+                final DatePicker datePicker=(DatePicker)view.findViewById(R.id.date_picker);
+                Calendar calendar=Calendar.getInstance();
+                final int year=calendar.get(Calendar.YEAR);       //当前年
+                final int month=calendar.get(Calendar.MONTH);     //当前月
+                final int day=calendar.get(Calendar.DAY_OF_MONTH);//当前日
+                int end_day=day;                            //设置可订票的最后天
+                int end_month=(month+5)%12;                 //最后月,可提前5个月订票
+                int end_year=year+(month+5)/12;             //最后年
+
+                //处理超出月份最大天数情况
+                if(end_month==1&&end_day>=29){//对应二月份
+                    if((end_year%4==0&&end_year%100!=0)||end_year%400==0){//闰年
+                        end_day=29;
+                    }else end_day=28;
+                }else if(end_day==31&&(end_month==3||end_month==5||end_month==8||end_month==10)){//对应3 6 9 11月份
+                    end_day=30;
+                }
+
+                datePicker.setMinDate(System.currentTimeMillis());//设置最小日期为当前日期
+                datePicker.setMaxDate(getDateLong(end_month,end_day,end_year));
+
+                dialog.setView(view);//设置弹窗布局
+                dialog.setTitle("选择日期");
+                dialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int year=datePicker.getYear();
+                        int month=datePicker.getMonth()+1;
+                        int day=datePicker.getDayOfMonth();
+                        date.setText(getDateChineseString(year,month,day));
+                        dialog.cancel();
+                    }
+                });
+                dialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                dialog.create().show();
             }
         });
 
@@ -132,6 +271,37 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
             public void onClick(View v) {
                 Intent intent=new Intent(MainActivity.this,LoginActivity.class);
                 startActivity(intent);
+            }
+        });
+
+        exitList.setOnItemClickListener(new AdapterView.OnItemClickListener() {//点击退出登录/程序的操作
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(id==0){//退出程序
+                    ActivityController.finishAll();
+                    android.os.Process.killProcess(android.os.Process.myPid());//杀掉当前进程
+                }else if(id==1){//退出登录
+                    isLoggedIn=false;
+                    loggedIn.setVisibility(View.GONE);
+                    notLoggedIn.setVisibility(View.VISIBLE);
+                    orderLayout.setVisibility(View.GONE);
+                    orderList.setVisibility(View.GONE);
+                    exitListAdapter.setLength(1);
+                }
+            }
+        });
+        orderBar.setOnItemClickListener(new AdapterView.OnItemClickListener() {//点击我的订单操作
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(id==0){
+                    if(orderAdapter.getImageLevel()==1){
+                        orderList.setVisibility(View.VISIBLE);
+                        orderAdapter.setImageLevel(2);
+                    }else if(orderAdapter.getImageLevel()==2){
+                        orderList.setVisibility(View.GONE);
+                        orderAdapter.setImageLevel(1);
+                    }
+                }
             }
         });
     }
@@ -158,7 +328,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                 .setOnPickListener(new OnPickListener() {
                     @Override
                     public void onPick(int position, City data) {
-                        Toast.makeText(getApplicationContext(), data.getName(), Toast.LENGTH_SHORT).show();
+                        //toastForShort(data.getName());
                         if(isStartCity)
                             startCity.setText(data.getName());
                         else
@@ -167,7 +337,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
 
                     @Override
                     public void onCancel(){
-                        Toast.makeText(getApplicationContext(), "取消选择", Toast.LENGTH_SHORT).show();
+                        //toastForShort("取消选择");
                     }
 
                     @Override
@@ -235,9 +405,14 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                         if(isLoggedIn){
                             loggedIn.setVisibility(View.VISIBLE);
                             notLoggedIn.setVisibility(View.GONE);
+                            orderLayout.setVisibility(View.VISIBLE);
+                            exitListAdapter.setLength(2);
                         }else{
                             loggedIn.setVisibility(View.GONE);
                             notLoggedIn.setVisibility(View.VISIBLE);
+                            orderList.setVisibility(View.GONE);
+                            orderLayout.setVisibility(View.GONE);
+                            exitListAdapter.setLength(1);
                         }
                         changeFileTabSize(1);
                         break;
@@ -269,35 +444,10 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         @Override
         public void onClick(View v) {
             if(v.getId() == startCity.getId()){
-                /*
-                Intent intent=new Intent(MainActivity.this,SelectPosActivity.class);
-                //SelectPosActivity销毁时会返回数据给当前活动，在onActivityResult中处理
-                startActivityForResult(intent,1);*//////////////////////////////////////////
                 selectPos(true);
             }else if(v.getId()==endCity.getId()){
-                /*Intent intent=new Intent(MainActivity.this,SelectPosActivity.class);
-                startActivityForResult(intent,2);*//////////////////////////////////////////
                 selectPos(false);
             }
         }
     }
-
-    /*
-    //根据SelectPosActivity活动的返回值设置相应的城市名
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode){
-            case 1:
-                if (resultCode==RESULT_OK && data!=null && !data.getStringExtra("city_name").contentEquals("")){
-                    startCity.setText(data.getStringExtra("city_name"));
-                    //startCity.setText(data.getStringExtra(SelectPosActivity.KEY_PICKED_CITY));
-                }
-            case 2:
-                if (resultCode==RESULT_OK && data!=null && !data.getStringExtra("city_name").contentEquals("")){
-                    endCity.setText(data.getStringExtra("city_name"));
-                    //endCity.setText(data.getStringExtra(SelectPosActivity.KEY_PICKED_CITY));
-                }
-        }
-    }*////////////////////////////////////////////////////
 }

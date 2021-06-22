@@ -1,14 +1,27 @@
 package com.example.flightonline;
 
 import android.os.Bundle;
+import android.view.View;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-public class InquiryFlightActivity extends AppCompatActivity {
+public class InquiryFlightActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inquiry_flight);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        ////////////////////////////////////
+
+        finish();
+    }
+
+    public void onBackClicked(View v){
+        ////////////////////////////////////
+
+        finish();
     }
 }

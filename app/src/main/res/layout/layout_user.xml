@@ -8,20 +8,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:weightSum="400"
         android:background="@drawable/gradient_background"
         >
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="5"/>
+            android:layout_height="5dp" />
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="65"
+            android:layout_height="120dp"
             android:orientation="horizontal"
             android:weightSum="100"
-            android:background="@drawable/write_background_2"
+            android:background="@drawable/white_background_2"
             android:id="@+id/notLoggedIn"
             >
             <LinearLayout
@@ -66,11 +63,10 @@
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="65"
+            android:layout_height="120dp"
             android:orientation="horizontal"
             android:weightSum="100"
-            android:background="@drawable/write_background_2"
+            android:background="@drawable/white_background_2"
             android:id="@+id/LoggedIn"
             android:visibility="gone"
             >
@@ -116,20 +112,41 @@
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="330"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite"
             >
-            <LinearLayout
+            <ListView
+                android:id="@+id/exitList"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/colorWhite"
-                >
-                <ListView
-                    android:id="@+id/userList"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    />
-            </LinearLayout>
+                android:layout_height="match_parent"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="10dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite"
+            android:id="@+id/orderLayout"
+            >
+            <ListView
+                android:id="@+id/orderBar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite"
+            >
+            <ListView
+                android:id="@+id/orderList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"
+                />
         </LinearLayout>
 
     </LinearLayout>
