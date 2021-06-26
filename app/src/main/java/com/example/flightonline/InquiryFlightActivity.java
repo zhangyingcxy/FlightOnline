@@ -1,11 +1,9 @@
 package com.example.flightonline;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.DatePicker;
@@ -14,11 +12,17 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
+
 import com.example.flightonline.adapter.FlightListAdapter;
 import com.example.flightonline.adapter.FlightListItem;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 
 public class InquiryFlightActivity extends BaseActivity {
@@ -37,6 +41,17 @@ public class InquiryFlightActivity extends BaseActivity {
 
     private ArrayList<FlightListItem> flightListItems;//用于存放搜索到的航班信息
 
+    //用于连接数据库的信息
+    private String ip = "121.36.199.16";
+    private int port = 3306;
+    private String dbName = "flightonline";
+    private String HOST = "jdbc:mysql://" + ip + ":" + port + "/" + dbName;
+    private String USER = "app";
+    private String PASSWORD = "123456";
+    // Java数据库连接JDBC驱动
+    private String DRIVER = "com.mysql.jdbc.Driver";
+    private Connection connection;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,11 +61,80 @@ public class InquiryFlightActivity extends BaseActivity {
         end_city=intent.getStringExtra("end_city");
         date=intent.getStringExtra("date");
 
-        test();////////////////////////////////////////////改为读取数据并初始化flightListItems的函数
-
         initUI();
+        refreshUI();//读取数据刷新界面
         setUpListener();
     }
+
+    //连接数据库，读取数据并刷新UI
+    private void refreshUI(){
+        //参考代码：https://blog.csdn.net/lkp1603645756/article/details/80259912
+        new Thread() {
+            @Override
+            public void run() {
+                for(int i=0;i<4;i++){//如果连接失败重复三次
+                    try {
+                        Class.forName(DRIVER).newInstance();
+                        connection = DriverManager.getConnection(HOST, USER, PASSWORD);
+                        System.out.println("Database connected successfully!");
+                        if(connection!=null)break;//连接成功后跳出循环
+                    } catch (ClassNotFoundException e) {
+                        Log.e("refreshUI", "run: "+e);
+                    } catch (SQLException e) {
+                        Log.e("refreshUI", "run: "+e);
+                    } catch (Exception e) {
+                        Log.e("refreshUI", "run: "+e);
+                    }
+                    try {
+                        Thread.sleep(200);  //隔0.2秒重复
+                    } catch (InterruptedException e) {
+                        Log.e("refreshUI", "run: "+e);
+                    }
+                }
+
+                if(connection!=null){
+                    //查询使用的SQL语句
+                    String sql="select * from flighttable where D_PLACE=\""+start_city+"\" and A_PLACE=\""+end_city
+                            +"\" and D_TIME like \""+middle_date.getText().toString()+"%\";";
+                    Log.d("SQL", sql);
+                    try {
+                        Statement statement = connection.createStatement();
+                        // 查询
+                        ResultSet rSet = statement.executeQuery(sql);
+                        flightListItems=new ArrayList<FlightListItem>();
+                        while (rSet.next()) {
+                            String _start=rSet.getString("D_TIME");
+                            String _end=rSet.getString("A_TIME");
+                            int plus=0;
+                            if(!_start.substring(0,10).contentEquals(_end.substring(0,10))){//简单地认为如果出发和到达不在同一天就是隔了一天
+                                plus=1;
+                            }
+                            flightListItems.add(new FlightListItem(rSet.getString("F_NUMBER"),_start.substring(11,16),
+                                    _end.substring(11,16),rSet.getString("D_POINT"),rSet.getString("A_POINT"),
+                                    rSet.getInt("PRICE"),plus));
+                        }
+                        if(flightListAdapter!=null){
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    flightListAdapter.dataChange(flightListItems);
+                                }
+                            });
+                        }
+                    } catch (SQLException e) {
+                        Log.e("TAG", "createStatement error");
+                    }
+
+                    try {
+                        connection.close();
+                    } catch (SQLException e) {
+                        Log.e("TAG", "关闭连接失败");
+                    }
+                }
+            }
+        }.start();
+    }
+
 
     private void test(){//////////////////////////////////////////////////////
         flightListItems=new ArrayList<FlightListItem>();
@@ -93,7 +177,7 @@ public class InquiryFlightActivity extends BaseActivity {
                 i++;
             }else{
                 if(i==4||i==7){
-                   ret=ret.concat("-");
+                    ret=ret.concat("-");
                     i++;
                 }
             }
@@ -147,7 +231,7 @@ public class InquiryFlightActivity extends BaseActivity {
             }
         }
         middle_date.setText(getDateString(year,month,day));
-        /////////////////////////////////////////刷新页面
+        refreshUI();
     }
 
     //将日期转为前一天
@@ -184,7 +268,7 @@ public class InquiryFlightActivity extends BaseActivity {
             }
         }
         middle_date.setText(getDateString(year,month,day));
-        /////////////////////////////////////////刷新页面
+        refreshUI();
     }
 
     private void initUI(){
@@ -200,7 +284,7 @@ public class InquiryFlightActivity extends BaseActivity {
         right_city.setText(end_city);
         middle_date.setText(changeDateFormat(date));
 
-        flightListAdapter=new FlightListAdapter(InquiryFlightActivity.this,flightListItems);
+        flightListAdapter=new FlightListAdapter(InquiryFlightActivity.this,new ArrayList<FlightListItem>());
         flightList.setAdapter(flightListAdapter);
     }
 
@@ -211,7 +295,10 @@ public class InquiryFlightActivity extends BaseActivity {
                 CharSequence ch=left_city.getText();
                 left_city.setText(right_city.getText());
                 right_city.setText(ch);
-                ///////////////////////////////////////////刷新列表
+                String temp=start_city;
+                start_city=end_city;
+                end_city=temp;
+                refreshUI();
             }
         });
         post_day.setOnClickListener(new View.OnClickListener() {

@@ -69,10 +69,10 @@ public class FlightListAdapter extends BaseAdapter {
         ViewHolder viewHolder=null;
         if(convertView==null){
             convertView=layoutInflater.inflate(R.layout.flight_item,null);
-            viewHolder=new ViewHolder(convertView);
+            viewHolder=new FlightListAdapter.ViewHolder(convertView);
             convertView.setTag(viewHolder);
         }else{
-            viewHolder=(ViewHolder) convertView.getTag();
+            viewHolder=(FlightListAdapter.ViewHolder) convertView.getTag();
         }
 
         if(items.size()>0&&items.size()>position){

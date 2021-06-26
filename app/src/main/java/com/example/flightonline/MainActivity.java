@@ -185,7 +185,8 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         final int year=calendar.get(Calendar.YEAR);       //当前年
         final int month=calendar.get(Calendar.MONTH);     //当前月
         final int day=calendar.get(Calendar.DAY_OF_MONTH);//当前日
-        date.setText(getDateChineseString(year,month+1,day));
+        ///////////////////////////////////////////////////date.setText(getDateChineseString(year,month+1,day));
+        date.setText("2021年07月01日");//////////////////////////////////////////////////////////////////
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -225,11 +226,19 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                 View view=(LinearLayout) getLayoutInflater().inflate(R.layout.date_dialog,null);
                 final DatePicker datePicker=(DatePicker)view.findViewById(R.id.date_picker);
                 Calendar calendar=Calendar.getInstance();
+                /*
                 final int year=calendar.get(Calendar.YEAR);       //当前年
                 final int month=calendar.get(Calendar.MONTH);     //当前月
                 int end_day= calendar.get(Calendar.DAY_OF_MONTH);                            //设置可订票的最后天
                 int end_month=(month+5)%12;                 //最后月,可提前5个月订票
                 int end_year=year+(month+5)/12;             //最后年
+                 *//////////////////////////////////////////////////////////////
+                final int year=2021;
+                final int month=6;
+                int end_day=3;
+                int end_month=6;
+                int end_year=2021;
+                /////////////////////////////////////////////////////////////////
 
                 //处理超出月份最大天数情况
                 if(end_month==1&&end_day>=29){//对应二月份

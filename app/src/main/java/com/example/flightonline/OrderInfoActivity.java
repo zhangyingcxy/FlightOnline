@@ -13,5 +13,4 @@ public class OrderInfoActivity extends BaseActivity {
     public void onBackClicked(View v){
         finish();
     }
-
 }

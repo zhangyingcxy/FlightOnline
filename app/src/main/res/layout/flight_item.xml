@@ -85,7 +85,7 @@
                     android:layout_height="wrap_content"
                     android:text="虹桥T2"
                     android:textColor="#777"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     android:id="@+id/left_airport"
                     android:gravity="center_horizontal"
                     />
@@ -94,7 +94,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/flightID"
                     android:textColor="@color/colorPrimary"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     android:gravity="center_horizontal"
                     android:text="成都航EU6688"
                     />
@@ -103,7 +103,7 @@
                     android:layout_height="wrap_content"
                     android:text="双流T2"
                     android:textColor="#777"
-                    android:textSize="14sp"
+                    android:textSize="12sp"
                     android:gravity="center_horizontal"
                     android:id="@+id/right_airport"
                     />

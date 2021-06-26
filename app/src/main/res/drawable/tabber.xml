@@ -1,0 +1,20 @@
+<level-list xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:drawable="@drawable/airplane1"
+        android:maxLevel="0"/>
+
+    <item
+        android:drawable="@drawable/airplane0"
+        android:maxLevel="1"/>
+
+    <item
+        android:drawable="@drawable/mine1"
+        android:maxLevel="2"/>
+
+    <item
+        android:drawable="@drawable/mine0"
+        android:maxLevel="3"/>
+
+
+</level-list>
