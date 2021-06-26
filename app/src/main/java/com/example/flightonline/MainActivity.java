@@ -100,13 +100,13 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode){
             case REQUEST_CODE_INQUIRY:
-                if(resultCode==RESULT_OK){
+                if(resultCode==RESULT_OK&&data!=null){
                     int year,month,day;
                     year=data.getIntExtra("year",0);
                     month=data.getIntExtra("month",0);
                     day=data.getIntExtra("day",0);
                     if(year!=0&&day!=0)
-                        date.setText(getDateChineseString(year,month+1,day));
+                        date.setText(getDateChineseString(year,month,day));
                 }
                 break;
             default:
@@ -114,7 +114,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
     }
 
     //获取年月日的字符串形式：2021年06月17日
-    private String getDateChineseString(int year,int month,int day){
+    public static String getDateChineseString(int year,int month,int day){
         String str="";
         str+=year+"年";
         str+=month>=10?month+"月":"0"+month+"月";
@@ -123,7 +123,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
     }
 
     //将年月日转换为long类型的日期
-    private long getDateLong(int month,int day,int year){
+    public static long getDateLong(int month,int day,int year){
         String str="";
         str+=year;
         str+="-";
@@ -227,8 +227,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                 Calendar calendar=Calendar.getInstance();
                 final int year=calendar.get(Calendar.YEAR);       //当前年
                 final int month=calendar.get(Calendar.MONTH);     //当前月
-                final int day=calendar.get(Calendar.DAY_OF_MONTH);//当前日
-                int end_day=day;                            //设置可订票的最后天
+                int end_day= calendar.get(Calendar.DAY_OF_MONTH);                            //设置可订票的最后天
                 int end_month=(month+5)%12;                 //最后月,可提前5个月订票
                 int end_year=year+(month+5)/12;             //最后年
 
@@ -278,21 +277,54 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(id==0){//退出程序
-                    ActivityController.finishAll();
-                    android.os.Process.killProcess(android.os.Process.myPid());//杀掉当前进程
+                    final AlertDialog.Builder dialog1=new AlertDialog.Builder(MainActivity.this);
+                    dialog1.setTitle("确认退出程序？");
+                    dialog1.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ActivityController.finishAll();
+                            android.os.Process.killProcess(android.os.Process.myPid());//杀掉当前进程
+                        }
+                    });
+                    dialog1.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            //
+                        }
+                    });
+                    dialog1.create().show();
                 }else if(id==1){//退出登录
-                    isLoggedIn=false;
-                    loggedIn.setVisibility(View.GONE);
-                    notLoggedIn.setVisibility(View.VISIBLE);
-                    orderLayout.setVisibility(View.GONE);
-                    orderList.setVisibility(View.GONE);
-                    exitListAdapter.setLength(1);
+                    final AlertDialog.Builder dialog2=new AlertDialog.Builder(MainActivity.this);
+                    dialog2.setTitle("确认退出当前登录？");
+                    dialog2.setMessage("此操作不会删除任何本地数据");
+                    dialog2.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            isLoggedIn=false;
+                            loggedIn.setVisibility(View.GONE);
+                            notLoggedIn.setVisibility(View.VISIBLE);
+                            orderLayout.setVisibility(View.GONE);
+                            orderList.setVisibility(View.GONE);
+                            exitListAdapter.setLength(1);
+                        }
+                    });
+                    dialog2.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            //
+                        }
+                    });
+                    dialog2.create().show();
                 }
             }
         });
         orderBar.setOnItemClickListener(new AdapterView.OnItemClickListener() {//点击我的订单操作
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ///////////////////////////////////////////////////////////////////////
+                Intent intent=new Intent(MainActivity.this,OrderInfoActivity.class);
+                startActivity(intent);
+                ////////////////////////////////////////////////////////////////////////
                 if(id==0){
                     if(orderAdapter.getImageLevel()==1){
                         orderList.setVisibility(View.VISIBLE);

@@ -9,4 +9,11 @@
     <color name="color_light_gray">#cccccc</color>
     <color name="colorBlue">#3F8CFF</color>
     <color name="startBlue">#99000ddd</color>
+    <color name="colorBlue1">#0000ff</color>
+    <color name="colorBlackGreen">#008577</color>
+    <color name="colorBgGray">#f6f7f8</color>
+    <color name="colorBgGray0">#eeeeff</color>
+    <color name="colorBgGray1">#e6e7e8</color>
+    <color name="colorBgGray2">#e3e3e3</color>
+
 </resources>

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.flightonline">
-    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -9,12 +8,16 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/app_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true">
+        android:theme="@style/AppTheme">
+        <activity android:name=".OrderInfoActivity"></activity>
+        <activity android:name=".BookFlightActivity" />
 
-        <meta-data android:name="com.amap.api.v2.apikey"
-            android:value="c553a8a19a1188675b34cbff9ddfd193"/>
-        <activity android:name=".LoginActivity"/>
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="c553a8a19a1188675b34cbff9ddfd193" />
+
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".GetDataActivity" />
         <activity android:name=".InquiryFlightActivity" />
         <activity
             android:name=".MainActivity"
@@ -25,18 +28,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".GetDataActivity">
-            <!--            <intent-filter>-->
-            <!--                <action android:name="android.intent.action.MAIN" />-->
-
-            <!--                <category android:name="android.intent.category.LAUNCHER" />-->
-            <!--            </intent-filter>-->
-        </activity>
-        <!--activity
-            android:name="com.zaaach.citypicker.CityPickerActivity"
-            android:theme="@style/CityPicker.NoActionBar"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="stateHidden|adjustPan"/-->
     </application>
 
 </manifest>
