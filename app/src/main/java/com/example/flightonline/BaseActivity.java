@@ -7,7 +7,20 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.sql.Connection;
+
 public class BaseActivity extends AppCompatActivity {
+    //用于连接数据库的信息
+    public String ip = "121.36.199.16";
+    public int port = 3306;
+    public String dbName = "flightonline";
+    public String HOST = "jdbc:mysql://" + ip + ":" + port + "/" + dbName;
+    public String USER = "app";
+    public String PASSWORD = "123456";
+    // Java数据库连接JDBC驱动
+    public String DRIVER = "com.mysql.jdbc.Driver";
+    public Connection connection;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

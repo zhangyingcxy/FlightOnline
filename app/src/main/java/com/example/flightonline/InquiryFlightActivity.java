@@ -17,7 +17,6 @@ import androidx.appcompat.app.AlertDialog;
 import com.example.flightonline.adapter.FlightListAdapter;
 import com.example.flightonline.adapter.FlightListItem;
 
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,17 +40,6 @@ public class InquiryFlightActivity extends BaseActivity {
 
     private ArrayList<FlightListItem> flightListItems;//用于存放搜索到的航班信息
 
-    //用于连接数据库的信息
-    private String ip = "121.36.199.16";
-    private int port = 3306;
-    private String dbName = "flightonline";
-    private String HOST = "jdbc:mysql://" + ip + ":" + port + "/" + dbName;
-    private String USER = "app";
-    private String PASSWORD = "123456";
-    // Java数据库连接JDBC驱动
-    private String DRIVER = "com.mysql.jdbc.Driver";
-    private Connection connection;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,7 +48,6 @@ public class InquiryFlightActivity extends BaseActivity {
         start_city=intent.getStringExtra("start_city");
         end_city=intent.getStringExtra("end_city");
         date=intent.getStringExtra("date");
-
         initUI();
         refreshUI();//读取数据刷新界面
         setUpListener();
@@ -136,7 +123,7 @@ public class InquiryFlightActivity extends BaseActivity {
     }
 
 
-    private void test(){//////////////////////////////////////////////////////
+    private void test(){//用于调试和测试
         flightListItems=new ArrayList<FlightListItem>();
         flightListItems.add(new FlightListItem("中联航KN5228",
                 "22:25","09:25","双流T2","虹桥T2",700,1));
@@ -370,6 +357,9 @@ public class InquiryFlightActivity extends BaseActivity {
                     FlightListItem item;
                     item=(FlightListItem)flightListAdapter.getItem(position);
                     Intent intent=new Intent(InquiryFlightActivity.this,BookFlightActivity.class);
+                    intent.putExtra("startCity",left_city.getText().toString());
+                    intent.putExtra("endCity",right_city.getText().toString());
+                    intent.putExtra("date",middle_date.getText().toString());
                     intent.putExtra("flightID",item.getFlightID());
                     intent.putExtra("startTime",item.getStartTime());
                     intent.putExtra("endTime",item.getEndTime());

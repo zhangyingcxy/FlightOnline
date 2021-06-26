@@ -123,7 +123,7 @@
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center_vertical"
                                         android:textColor="@color/colorPrimaryDark"
-                                        android:text="15622223333"
+                                        android:text="12345678910"
                                         android:textSize="20sp" />
                                 </LinearLayout>
                             </LinearLayout>
@@ -153,7 +153,7 @@
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center_vertical"
                                         android:id="@+id/password"
-                                        android:text="*************"
+                                        android:text="123456"
                                         android:textSize="20sp"
                                         android:textColor="@color/colorPrimaryDark"
                                         />

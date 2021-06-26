@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,12 +23,19 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.example.flightonline.adapter.ExitListAdapter;
 import com.example.flightonline.adapter.OrderAdapter;
+import com.example.flightonline.adapter.RecordListAdapter;
+import com.example.flightonline.adapter.RecordListItem;
 import com.zaaach.citypicker.CityPicker;
 import com.zaaach.citypicker.adapter.OnPickListener;
 import com.zaaach.citypicker.model.City;
 import com.zaaach.citypicker.model.HotCity;
 import com.zaaach.citypicker.model.LocatedCity;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,11 +62,13 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
     private ListView exitList;//退出登录和退出程序
     private LinearLayout orderLayout;
     private ListView orderBar;//订单
+    private LinearLayout line;//分割订单栏和订单列表的分界线
     private ListView orderList;//详细订单列表
     private View include2;
 
     private ExitListAdapter exitListAdapter;
     private OrderAdapter orderAdapter;
+    private RecordListAdapter orderListAdapter;
 
     public static boolean isPageLeft=true;//用于标志当前显示的页面（主界面/用户界面）
     public static boolean isLoggedIn=false;//标志是否已登录
@@ -89,6 +99,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                 loggedIn.setVisibility(View.GONE);
                 notLoggedIn.setVisibility(View.VISIBLE);
                 orderList.setVisibility(View.GONE);
+                line.setVisibility(View.GONE);
                 orderLayout.setVisibility(View.GONE);
                 exitListAdapter.setLength(1);
             }
@@ -166,6 +177,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         orderLayout=(LinearLayout) include2.findViewById(R.id.orderLayout);
         orderBar=(ListView) include2.findViewById(R.id.orderBar);
         orderList=(ListView) include2.findViewById(R.id.orderList);
+        line=(LinearLayout) include2.findViewById(R.id.line);
 
         String[] exitOps={"退出程序","退出登录"};
         exitListAdapter=new ExitListAdapter(MainActivity.this,exitOps,1);
@@ -173,7 +185,8 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         String[] arr={"我的订单"};
         orderAdapter=new OrderAdapter(MainActivity.this,arr,1);
         orderBar.setAdapter(orderAdapter);
-
+        orderListAdapter=new RecordListAdapter(MainActivity.this,new ArrayList<RecordListItem>());
+        orderList.setAdapter(orderListAdapter);
 
         //打开程序时显示主界面
         page1.setImageLevel(0);
@@ -185,8 +198,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         final int year=calendar.get(Calendar.YEAR);       //当前年
         final int month=calendar.get(Calendar.MONTH);     //当前月
         final int day=calendar.get(Calendar.DAY_OF_MONTH);//当前日
-        ///////////////////////////////////////////////////date.setText(getDateChineseString(year,month+1,day));
-        date.setText("2021年07月01日");//////////////////////////////////////////////////////////////////
+        date.setText(getDateChineseString(year,month+1,day));
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -226,19 +238,18 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                 View view=(LinearLayout) getLayoutInflater().inflate(R.layout.date_dialog,null);
                 final DatePicker datePicker=(DatePicker)view.findViewById(R.id.date_picker);
                 Calendar calendar=Calendar.getInstance();
-                /*
+
                 final int year=calendar.get(Calendar.YEAR);       //当前年
                 final int month=calendar.get(Calendar.MONTH);     //当前月
                 int end_day= calendar.get(Calendar.DAY_OF_MONTH);                            //设置可订票的最后天
                 int end_month=(month+5)%12;                 //最后月,可提前5个月订票
                 int end_year=year+(month+5)/12;             //最后年
-                 *//////////////////////////////////////////////////////////////
-                final int year=2021;
-                final int month=6;
-                int end_day=3;
-                int end_month=6;
-                int end_year=2021;
-                /////////////////////////////////////////////////////////////////
+
+//                final int year=2021;
+//                final int month=6;
+//                int end_day=3;
+//                int end_month=6;
+//                int end_year=2021;
 
                 //处理超出月份最大天数情况
                 if(end_month==1&&end_day>=29){//对应二月份
@@ -313,6 +324,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                             loggedIn.setVisibility(View.GONE);
                             notLoggedIn.setVisibility(View.VISIBLE);
                             orderLayout.setVisibility(View.GONE);
+                            line.setVisibility(View.GONE);
                             orderList.setVisibility(View.GONE);
                             exitListAdapter.setLength(1);
                         }
@@ -330,30 +342,115 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
         orderBar.setOnItemClickListener(new AdapterView.OnItemClickListener() {//点击我的订单操作
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ///////////////////////////////////////////////////////////////////////
-                Intent intent=new Intent(MainActivity.this,OrderInfoActivity.class);
-                startActivity(intent);
-                ////////////////////////////////////////////////////////////////////////
+                getRecords();//查询并显示用户记录
+
                 if(id==0){
                     if(orderAdapter.getImageLevel()==1){
                         orderList.setVisibility(View.VISIBLE);
+                        line.setVisibility(View.VISIBLE);
                         orderAdapter.setImageLevel(2);
                     }else if(orderAdapter.getImageLevel()==2){
                         orderList.setVisibility(View.GONE);
+                        line.setVisibility(View.GONE);
                         orderAdapter.setImageLevel(1);
                     }
                 }
             }
         });
+        orderList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent=new Intent(MainActivity.this,OrderInfoActivity.class);
+                RecordListItem item=(RecordListItem)orderListAdapter.getItem(position);
+                intent.putExtra("date",item.getDate());
+                intent.putExtra("flightID",item.getFlightID());
+                intent.putExtra("startTime",item.getStartTime());
+                intent.putExtra("endTime",item.getEndTime());
+                intent.putExtra("startAirport",item.getStartAirport());
+                intent.putExtra("endAirport",item.getEndAirport());
+                intent.putExtra("price",item.getPrice());
+                intent.putExtra("plus",item.getPlus());
+                intent.putExtra("name",item.getName());
+                intent.putExtra("teleNumber",item.getTeleNumber());
+                intent.putExtra("idNumber",item.getIdNumber());
+                startActivity(intent);
+            }
+        });
+    }
+
+    private Connection connection;
+    //从远程数据库获取用户记录然后显示列表
+    private void getRecords(){
+        //参考代码：https://blog.csdn.net/lkp1603645756/article/details/80259912
+        final ArrayList<RecordListItem> records;
+        records=new ArrayList<RecordListItem>();
+        new Thread() {
+            @Override
+            public void run() {
+                for(int i=0;i<4;i++){//如果连接失败重复三次
+                    try {
+                        Class.forName(DRIVER).newInstance();
+                        connection = DriverManager.getConnection(HOST, USER, PASSWORD);
+                        System.out.println("Database connected successfully!");
+                        if(connection!=null)break;//连接成功后跳出循环
+                    } catch (ClassNotFoundException e) {
+                        Log.e("refreshUI", "run: "+e);
+                    } catch (SQLException e) {
+                        Log.e("refreshUI", "run: "+e);
+                    } catch (Exception e) {
+                        Log.e("refreshUI", "run: "+e);
+                    }
+                    try {
+                        Thread.sleep(200);  //隔0.2秒重复
+                    } catch (InterruptedException e) {
+                        Log.e("refreshUI", "run: "+e);
+                    }
+                }
+
+                if(connection!=null){
+                    //查询使用的SQL语句
+                    String sql="select * from recordtable where NAME=\"张颖\" and ID_NUMBER=\"2314562*********25\";";
+                    Log.d("SQL", sql);
+                    try {
+                        Statement statement = connection.createStatement();
+                        // 查询
+                        ResultSet rs = statement.executeQuery(sql);
+                        while (rs.next()) {
+                            records.add(new RecordListItem(rs.getString("F_NUMBER"),rs.getString("D_TIME"),
+                                    rs.getString("A_TIME"),rs.getString("D_POINT"),rs.getString("A_POINT"),
+                                    rs.getString("D_DATE"), rs.getInt("PRICE"),rs.getInt("PLUS"),
+                                    rs.getString("D_PLACE"), rs.getString("A_PLACE"),rs.getString("NAME"),
+                                    rs.getString("TELE_NUMBER"), rs.getString("ID_NUMBER")));
+                        }
+                        if(orderListAdapter!=null){
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    orderListAdapter.dataChange(records);
+                                }
+                            });
+                        }
+                    } catch (SQLException e) {
+                        Log.e("TAG", "createStatement error");
+                    }
+
+                    try {
+                        connection.close();
+                    } catch (SQLException e) {
+                        Log.e("TAG", "关闭连接失败");
+                    }
+                }
+            }
+        }.start();
     }
 
     private void initHotCities(){
         hotCities=new ArrayList<>();
         hotCities.add(new HotCity("北京", "北京", "101010100")); //code为城市代码
         hotCities.add(new HotCity("上海", "上海", "101020100"));
-        hotCities.add(new HotCity("广州", "广东", "101280101"));
-        hotCities.add(new HotCity("深圳", "广东", "101280601"));
-        hotCities.add(new HotCity("杭州", "浙江", "101210101"));
+//        hotCities.add(new HotCity("广州", "广东", "101280101"));
+//        hotCities.add(new HotCity("深圳", "广东", "101280601"));
+//        hotCities.add(new HotCity("杭州", "浙江", "101210101"));
         hotCities.add(new HotCity("成都", "四川", "101270101"));
     }
 
@@ -453,6 +550,7 @@ public class MainActivity extends BaseActivity {//继承自BaseActivity，方便
                             notLoggedIn.setVisibility(View.VISIBLE);
                             orderList.setVisibility(View.GONE);
                             orderLayout.setVisibility(View.GONE);
+                            line.setVisibility(View.GONE);
                             exitListAdapter.setLength(1);
                         }
                         changeFileTabSize(1);
